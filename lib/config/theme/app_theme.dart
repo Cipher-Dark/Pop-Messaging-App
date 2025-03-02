@@ -29,5 +29,73 @@ class AppTheme {
       ),
       iconTheme: IconThemeData(color: Colors.black),
     ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: primaryColor.withValues(alpha: .1),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide(color: primaryColor),
+      ),
+      hintStyle: TextStyle(
+        color: Colors.grey.shade600,
+      ),
+    ),
+    textTheme: TextTheme(
+      titleLarge: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        color: Colors.black87,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        color: Colors.black87,
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12,
+        color: Colors.grey,
+      ),
+    ),
+
+    // Message bubble
+    cardTheme: CardTheme(
+      color: primaryColor.withValues(alpha: .1),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+
+    //Button Theme
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
   );
 }
