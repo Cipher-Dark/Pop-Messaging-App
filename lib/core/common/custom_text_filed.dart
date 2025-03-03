@@ -32,7 +32,7 @@ class CustomTextFiled extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         suffixIcon: suffixIcon,
-        prefix: prefixIcon,
+        prefixIcon: prefixIcon,
       ),
     );
   }
