@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pop_chat/core/common/custom_button.dart';
 import 'package:pop_chat/core/common/custom_text_filed.dart';
-import 'package:pop_chat/presentation/screens/auth/login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -158,7 +157,11 @@ class _SignupScreenState extends State<SignupScreen> {
                       _isPasswardVisable = !_isPasswardVisable;
                     });
                   },
-                  child: Icon(Icons.visibility),
+                  child: _isPasswardVisable
+                      ? Icon(Icons.visibility)
+                      : Icon(
+                          Icons.visibility_off,
+                        ),
                 ),
                 focusNode: _passwordFocus,
                 validator: _validatePassword,

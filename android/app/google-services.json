@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "723880478413",
+    "project_id": "pop-chat-app-1886e",
+    "storage_bucket": "pop-chat-app-1886e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723880478413:android:01b96ca770e5a40cfe4b84",
+        "android_client_info": {
+          "package_name": "com.sagar.pop_chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj-iSensLO2flynxb59TE_PDrB3W69S3k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

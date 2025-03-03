@@ -80,15 +80,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _isPasswardVisable,
                   suffixIcon: GestureDetector(
                     onTap: () {
-                      setState(() {
-                        _isPasswardVisable = !_isPasswardVisable;
-                      });
+                      setState(
+                        () {
+                          _isPasswardVisable = !_isPasswardVisable;
+                        },
+                      );
                     },
-                    child: Icon(Icons.visibility),
+                    child: _isPasswardVisable
+                        ? Icon(Icons.visibility)
+                        : Icon(
+                            Icons.visibility_off,
+                          ),
                   ),
                   prefixIcon: Icon(Icons.lock_outline),
                   focusNode: _passwordFocus,
-                  // validator: _validatePassword,
                 ),
                 SizedBox(height: 30),
                 CustomButton(
