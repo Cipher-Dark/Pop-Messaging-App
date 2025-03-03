@@ -39,6 +39,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return "Please enter Password.";
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: passwordController,
                   hintText: "Password",
                   obscureText: _isPasswardVisable,
+                  validator: _validatePassword,
                   suffixIcon: GestureDetector(
                     onTap: () {
                       setState(
