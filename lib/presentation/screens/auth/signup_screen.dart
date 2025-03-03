@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pop_chat/core/common/custom_button.dart';
 import 'package:pop_chat/core/common/custom_text_filed.dart';
+import 'package:pop_chat/data/repos/auth_repositary.dart';
+import 'package:pop_chat/data/services/service_locator.dart';
+import 'package:pop_chat/router/app_router.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -86,6 +91,31 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
+  Future<void> handleSignUp() async {
+    FocusScope.of(context).unfocus();
+    if (_formKey.currentState!.validate()) {
+      try {
+        getIt<AuthRepositary>().signUp(
+          fullName: nameController.text,
+          username: userNameController.text,
+          email: emailController.text,
+          phoneNumber: phoneController.text,
+          password: passwordController.text,
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString(),
+            ),
+          ),
+        );
+      }
+    } else {
+      log("Form validation fail");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,10 +198,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               SizedBox(height: 30),
               CustomButton(
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  if (_formKey.currentState!.validate()) {}
-                },
+                onPressed: handleSignUp,
                 text: "Create Account",
               ),
               SizedBox(height: 20),
@@ -189,7 +216,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Navigator.pop(context);
+                            getIt<AppRouter>().pop();
                           },
                       )
                     ],

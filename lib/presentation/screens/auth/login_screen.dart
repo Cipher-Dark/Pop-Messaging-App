@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pop_chat/core/common/custom_button.dart';
 import 'package:pop_chat/core/common/custom_text_filed.dart';
+import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/presentation/screens/auth/signup_screen.dart';
+import 'package:pop_chat/router/app_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -127,7 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen()));
+                              // Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen()));
+                              getIt<AppRouter>().push(const SignupScreen());
                             },
                         )
                       ],
