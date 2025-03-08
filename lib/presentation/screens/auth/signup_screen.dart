@@ -1,11 +1,14 @@
 import 'dart:developer';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pop_chat/core/common/custom_button.dart';
 import 'package:pop_chat/core/common/custom_text_filed.dart';
-import 'package:pop_chat/data/repos/auth_repositary.dart';
+import 'package:pop_chat/core/utils/ui_utils.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
+import 'package:pop_chat/logic/cubits/auth/auth_cubit.dart';
+import 'package:pop_chat/logic/cubits/auth/auth_state.dart';
+import 'package:pop_chat/presentation/home/home_screen.dart';
 import 'package:pop_chat/router/app_router.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -95,21 +98,15 @@ class _SignupScreenState extends State<SignupScreen> {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       try {
-        getIt<AuthRepositary>().signUp(
+        await getIt<AuthCubit>().signUp(
           fullName: nameController.text,
-          username: userNameController.text,
+          userName: userNameController.text,
           email: emailController.text,
           phoneNumber: phoneController.text,
           password: passwordController.text,
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString(),
-            ),
-          ),
-        );
+        UiUtils.showSnackBar(context, message: e.toString(), isError: true);
       }
     } else {
       log("Form validation fail");
@@ -118,115 +115,137 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Create a Account",
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                "Please fill in the details to continue",
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey,
-                    ),
-              ),
-              CustomTextFiled(
-                controller: nameController,
-                hintText: "Full Name",
-                obscureText: false,
-                prefixIcon: Icon(Icons.person_outline),
-                focusNode: _nameFocus,
-                validator: _validateName,
-              ),
-              SizedBox(height: 16),
-              CustomTextFiled(
-                controller: userNameController,
-                hintText: "Username",
-                obscureText: false,
-                prefixIcon: Icon(Icons.alternate_email),
-                focusNode: _usernameFocus,
-                validator: _validateUsername,
-              ),
-              SizedBox(height: 16),
-              CustomTextFiled(
-                controller: emailController,
-                hintText: "Email",
-                obscureText: false,
-                prefixIcon: Icon(Icons.email_outlined),
-                focusNode: _emailFocus,
-                validator: _validateEmail,
-              ),
-              SizedBox(height: 16),
-              CustomTextFiled(
-                controller: phoneController,
-                hintText: "Phone Number",
-                obscureText: false,
-                prefixIcon: Icon(Icons.phone_outlined),
-                focusNode: _phoneFocus,
-                validator: _validatePhone,
-              ),
-              SizedBox(height: 16),
-              CustomTextFiled(
-                controller: passwordController,
-                hintText: "Password",
-                obscureText: _isPasswardVisable,
-                prefixIcon: Icon(Icons.password_outlined),
-                suffixIcon: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isPasswardVisable = !_isPasswardVisable;
-                    });
-                  },
-                  child: _isPasswardVisable
-                      ? Icon(Icons.visibility)
-                      : Icon(
-                          Icons.visibility_off,
+    return BlocConsumer<AuthCubit, AuthState>(
+      bloc: getIt<AuthCubit>(),
+      listener: (context, state) {
+        if (state.status == AuthStatus.auhtentication) {
+          getIt<AppRouter>().pushAndRemoveUntil(HomeScreen());
+        } else if (state.status == AuthStatus.error && state.error != null) {
+          UiUtils.showSnackBar(context, message: state.error!, isError: true);
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(),
+          body: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Create a Account",
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                ),
-                focusNode: _passwordFocus,
-                validator: _validatePassword,
-              ),
-              SizedBox(height: 30),
-              CustomButton(
-                onPressed: handleSignUp,
-                text: "Create Account",
-              ),
-              SizedBox(height: 20),
-              Center(
-                child: RichText(
-                  text: TextSpan(
-                    text: "Already have an account? ",
-                    style: TextStyle(color: Colors.grey.shade600),
-                    children: [
-                      TextSpan(
-                        text: "Login",
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            getIt<AppRouter>().pop();
-                          },
-                      )
-                    ],
                   ),
-                ),
+                  SizedBox(height: 10),
+                  Text(
+                    "Please fill in the details to continue",
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  ),
+                  CustomTextFiled(
+                    controller: nameController,
+                    hintText: "Full Name",
+                    obscureText: false,
+                    prefixIcon: Icon(Icons.person_outline),
+                    focusNode: _nameFocus,
+                    validator: _validateName,
+                  ),
+                  SizedBox(height: 16),
+                  CustomTextFiled(
+                    controller: userNameController,
+                    hintText: "Username",
+                    obscureText: false,
+                    prefixIcon: Icon(Icons.alternate_email),
+                    focusNode: _usernameFocus,
+                    validator: _validateUsername,
+                  ),
+                  SizedBox(height: 16),
+                  CustomTextFiled(
+                    controller: emailController,
+                    hintText: "Email",
+                    obscureText: false,
+                    prefixIcon: Icon(Icons.email_outlined),
+                    focusNode: _emailFocus,
+                    validator: _validateEmail,
+                  ),
+                  SizedBox(height: 16),
+                  CustomTextFiled(
+                    controller: phoneController,
+                    hintText: "Phone Number",
+                    obscureText: false,
+                    prefixIcon: Icon(Icons.phone_outlined),
+                    focusNode: _phoneFocus,
+                    validator: _validatePhone,
+                  ),
+                  SizedBox(height: 16),
+                  CustomTextFiled(
+                    controller: passwordController,
+                    hintText: "Password",
+                    obscureText: _isPasswardVisable,
+                    prefixIcon: Icon(Icons.password_outlined),
+                    suffixIcon: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isPasswardVisable = !_isPasswardVisable;
+                        });
+                      },
+                      child: _isPasswardVisable
+                          ? Icon(Icons.visibility)
+                          : Icon(
+                              Icons.visibility_off,
+                            ),
+                    ),
+                    focusNode: _passwordFocus,
+                    validator: _validatePassword,
+                  ),
+                  SizedBox(height: 30),
+                  CustomButton(
+                    onPressed: handleSignUp,
+                    text: "Create Account",
+                    child: state.status == AuthStatus.loading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : Text(
+                            "Create Account",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                  SizedBox(height: 20),
+                  Center(
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Already have an account? ",
+                        style: TextStyle(color: Colors.grey.shade600),
+                        children: [
+                          TextSpan(
+                            text: "Login",
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                getIt<AppRouter>().pop();
+                              },
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
