@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pop_chat/data/repos/auth_repositary.dart';
+import 'package:pop_chat/data/repos/contact_repositary.dart';
 import 'package:pop_chat/firebase_options.dart';
 import 'package:pop_chat/logic/cubits/auth/auth_cubit.dart';
 import 'package:pop_chat/router/app_router.dart';
@@ -21,6 +22,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
   getIt.registerLazySingleton(() => AuthRepositary());
+  getIt.registerLazySingleton(() => ContactRepositary());
 
   getIt.registerLazySingleton(() => AuthCubit(authRepositary: AuthRepositary()));
 }
