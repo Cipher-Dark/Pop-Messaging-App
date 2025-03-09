@@ -5,24 +5,31 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:pop_chat/data/models/user_model.dart';
 import 'package:pop_chat/data/services/base_repositary.dart';
 
-class ContactRepositary extends BaseRepositary {
-  String get currentUserID => FirebaseAuth.instance.currentUser?.uid ?? '';
+class ContactRepository extends BaseRepositary {
+  String get currentUserId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  Future<bool> requestContactPermission() async {
-    return await FlutterContacts.requestPermission();
+  Future<bool> requestContactsPermission() async {
+    if (await FlutterContacts.requestPermission()) {
+      return FlutterContacts.requestPermission();
+    }
+    return false;
   }
 
   Future<List<Map<String, dynamic>>> getRegisteredContacts() async {
+    final bool = await requestContactsPermission();
+    if (!bool) {
+      log("Permission ");
+      return [];
+    }
     try {
-      // get all device contacts
+      //get device contacts with phone number
       final contacts = await FlutterContacts.getContacts(
         withProperties: true,
         withPhoto: true,
       );
 
-      // extract the phone numbers and normalize them or format in simple number like 766**198**
-
-      final phoneNumber = contacts
+      //extract phone numbers and normalize them
+      final phoneNumbers = contacts
           .where((contact) => contact.phones.isNotEmpty)
           .map((contact) => {
                 'name': contact.displayName,
@@ -31,27 +38,29 @@ class ContactRepositary extends BaseRepositary {
               })
           .toList();
 
-      // get all users form users
+      //get all users from firestore
+
       final usersSnapshot = await firestore.collection("users").get();
+
       final registeredUsers = usersSnapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
 
-      //match contact with registered users
-      final matchedContacts = phoneNumber.where((contact) {
-        final phoneNumber = contact['phoneNumber'];
-        return registeredUsers.any(
-          (user) => user.phoneNumber == phoneNumber && user.uid != currentUserID,
-        );
+      // match contacts with registered users
+
+      final matchedContacts = phoneNumbers.where((contact) {
+        final phoneNumber = contact["phoneNumber"];
+        return registeredUsers.any((user) => user.phoneNumber == phoneNumber && user.uid != currentUserId);
       }).map((contact) {
-        final registerUser = registeredUsers.firstWhere((user) => user.phoneNumber == contact['phoneNumber']);
+        final registeredUser = registeredUsers.firstWhere((user) => user.phoneNumber == contact["phoneNumber"]);
         return {
-          'id': registerUser.uid,
+          'id': registeredUser.uid,
           'name': contact['name'],
           'phoneNumber': contact['phoneNumber'],
         };
       }).toList();
+
       return matchedContacts;
     } catch (e) {
-      log("error getting users");
+      log("error getting registered users");
       return [];
     }
   }

@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pop_chat/data/repos/auth_repositary.dart';
+import 'package:pop_chat/data/repos/auth_repository.dart';
 import 'package:pop_chat/logic/cubits/auth/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final AuthRepositary _authRepositary;
+  final AuthRepository _authRepositary;
   StreamSubscription<User?>? _authStateSubscription;
 
   AuthCubit({
-    required AuthRepositary authRepositary,
+    required AuthRepository authRepositary,
   })  : _authRepositary = authRepositary,
         super(const AuthState()) {
     _init();
