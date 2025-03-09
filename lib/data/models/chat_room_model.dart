@@ -54,7 +54,7 @@ class ChatRoomModel {
       participantsName: Map<String, String>.from(
         data["participantsName"] ?? {},
       ),
-      isTyping: data["isTyping"] ?? "",
+      isTyping: data["isTyping"] ?? false,
       typingUserID: data["isTypingUserID"],
       isCallActive: data["isCallActive"],
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pop_chat/data/repository/contact_repository.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/logic/cubits/auth/auth_cubit.dart';
+import 'package:pop_chat/presentation/chat/chat_message_screen.dart';
 import 'package:pop_chat/presentation/screens/auth/login_screen.dart';
 import 'package:pop_chat/router/app_router.dart';
 
@@ -71,7 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(contact["name"][0].toUpperCase()),
                           ),
                           title: Text(contact["name"]),
-                          onTap: () {},
+                          onTap: () {
+                            getIt<AppRouter>().push(
+                              ChatMessageScreen(
+                                receiverID: contact['id'],
+                                receiverName: contact['name'],
+                              ),
+                            );
+                          },
                         );
                       },
                     );
