@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pop_chat/data/repos/contact_repository.dart';
+import 'package:pop_chat/data/repository/contact_repository.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/logic/cubits/auth/auth_cubit.dart';
 import 'package:pop_chat/presentation/screens/auth/login_screen.dart';

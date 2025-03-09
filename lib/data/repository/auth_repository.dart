@@ -2,9 +2,9 @@ import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pop_chat/data/models/user_model.dart';
-import 'package:pop_chat/data/services/base_repositary.dart';
+import 'package:pop_chat/data/services/base_repository.dart';
 
-class AuthRepository extends BaseRepositary {
+class AuthRepository extends BaseRepository {
   Stream<User?> get authStateChnages => auth.authStateChanges();
 
   Future<UserModel> signUp({

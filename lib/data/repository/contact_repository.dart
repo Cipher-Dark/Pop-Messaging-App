@@ -3,9 +3,9 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:pop_chat/data/models/user_model.dart';
-import 'package:pop_chat/data/services/base_repositary.dart';
+import 'package:pop_chat/data/services/base_repository.dart';
 
-class ContactRepository extends BaseRepositary {
+class ContactRepository extends BaseRepository {
   String get currentUserId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   Future<bool> requestContactsPermission() async {
