@@ -16,8 +16,6 @@ class ChatRepository extends BaseRepository {
     String currentUserID,
     String otherUserId,
   ) async {
-    log("current user id $currentUserID");
-    log("other user id $otherUserId");
     final users = [
       currentUserID,
       otherUserId
@@ -27,7 +25,6 @@ class ChatRepository extends BaseRepository {
     final roomDoc = await _chatRooms.doc(roomId).get();
 
     if (roomDoc.exists) {
-      log("room already exist");
       return ChatRoomModel.fromFirestore(roomDoc);
     }
     final currentUserData = (await firestore.collection("users").doc(currentUserID).get()).data() as Map<String, dynamic>;
@@ -97,7 +94,6 @@ class ChatRepository extends BaseRepository {
     String chatRoomId, {
     DocumentSnapshot? lastDocument,
   }) {
-    log("room id : $chatRoomId");
     var query = getChatRoomMessage(chatRoomId)
         .orderBy(
           'timestamp',
@@ -107,7 +103,6 @@ class ChatRepository extends BaseRepository {
 
     if (lastDocument != null) {
       query = query.startAfterDocument(lastDocument);
-      log("in last doc");
     }
 
     return query.snapshots().map(
@@ -134,5 +129,49 @@ class ChatRepository extends BaseRepository {
           (doc) => ChatMessageModel.fromFirestore(doc),
         )
         .toList();
+  }
+
+  Stream<List<ChatRoomModel>> getChatRooms(String userId) {
+    // chatRoom --> participants --> userID
+    return _chatRooms.where("participants", arrayContains: userId).orderBy("lastMessageTime", descending: true).snapshots().map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => ChatRoomModel.fromFirestore(doc),
+              )
+              .toList(),
+        );
+  }
+
+  Stream<int> getUnreadCount(String chatRoomId, String userId) {
+    return getChatRoomMessage(chatRoomId).where("receiverID", isEqualTo: userId).where("status", isEqualTo: MessageStatus.sent.toString()).snapshots().map(
+          (snapshot) => snapshot.docs.length,
+        );
+  }
+
+  Future<void> markMessageAsRead(String chatRoomId, String userId) async {
+    try {
+      final batch = firestore.batch();
+
+      // get all unread message where user is receiver
+
+      final unreadMessage = await getChatRoomMessage(chatRoomId)
+          .where("receiverID", isEqualTo: userId)
+          .where(
+            "status",
+            isEqualTo: MessageStatus.sent.toString(),
+          )
+          .get();
+
+      for (final doc in unreadMessage.docs) {
+        batch.update(doc.reference, {
+          'readBy': FieldValue.arrayUnion([
+            userId
+          ]),
+          'status': MessageStatus.read.toString(),
+        });
+        await batch.commit();
+        log("Marked messages as read for user id $userId");
+      }
+    } catch (e) {}
   }
 }

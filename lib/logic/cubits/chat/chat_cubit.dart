@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pop_chat/data/repository/chat_repository.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_state.dart';
@@ -6,6 +7,7 @@ import 'package:pop_chat/logic/cubits/chat/chat_state.dart';
 class ChatCubit extends Cubit<ChatState> {
   final ChatRepository _chatRepository;
   final String currentUserID;
+  bool _isInChat = false;
 
   StreamSubscription? _messageSubscription;
 
@@ -16,6 +18,7 @@ class ChatCubit extends Cubit<ChatState> {
         super(const ChatState());
 
   void enterChat(String recieverID) async {
+    _isInChat = true;
     emit(state.copyWith(status: ChatStatus.loading));
     try {
       final chatRoom = await _chatRepository.getOrCreateChatRoom(
@@ -57,6 +60,9 @@ class ChatCubit extends Cubit<ChatState> {
   void _subscribeToMessages(String chatRoomId) {
     _messageSubscription?.cancel();
     _messageSubscription = _chatRepository.getMessages(chatRoomId).listen((messages) {
+      if (_isInChat) {
+        _markMessagesAsRead(chatRoomId);
+      }
       emit(
         state.copyWith(
           messages: messages,
@@ -68,5 +74,17 @@ class ChatCubit extends Cubit<ChatState> {
         state.copyWith(error: "Failed to load messages $error", status: ChatStatus.error),
       );
     });
+  }
+
+  Future<void> _markMessagesAsRead(String chatRoomId) async {
+    try {
+      await _chatRepository.markMessageAsRead(chatRoomId, currentUserID);
+    } catch (e) {
+      log("Error in maek message $e");
+    }
+  }
+
+  Future<void> leaveChat() async {
+    _isInChat = false;
   }
 }

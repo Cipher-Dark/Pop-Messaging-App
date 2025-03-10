@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:pop_chat/data/models/chat_message_model.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_cubit.dart';
@@ -23,10 +24,12 @@ class ChatMessageScreen extends StatefulWidget {
 class _ChatMessageScreenState extends State<ChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   late final ChatCubit _chatCubit;
+
   @override
   void initState() {
     _chatCubit = getIt<ChatCubit>();
     _chatCubit.enterChat(widget.receiverID);
+
     super.initState();
   }
 
@@ -43,6 +46,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   void dispose() {
     super.dispose();
     _messageController.dispose();
+    _chatCubit.leaveChat();
   }
 
   @override
@@ -90,12 +94,12 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
             children: [
               Expanded(
                 child: ListView.builder(
+                  reverse: true,
                   itemCount: state.messages.length,
                   itemBuilder: (context, index) {
                     log("message in listview");
                     final message = state.messages[index];
                     final isME = message.senderID == _chatCubit.currentUserID;
-
                     log(message.content);
                     return MessageBubble(
                       message: message,
@@ -195,17 +199,17 @@ class MessageBubble extends StatelessWidget {
               spacing: 10,
               children: [
                 Text(
-                  "05:10",
+                  DateFormat('h:mm a').format(message.timestamp.toDate()),
                   style: TextStyle(
                     color: isME ? Colors.white : Colors.black,
+                    fontSize: 10,
                   ),
                 ),
-                isME
-                    ? Icon(
-                        Icons.done_all,
-                        color: message.status == MessageStatus.read ? Colors.green : Colors.white,
-                      )
-                    : Container(),
+                if (isME)
+                  Icon(
+                    Icons.done_all,
+                    color: message.status == MessageStatus.read ? Colors.green : Colors.white,
+                  )
               ],
             ),
           ],

@@ -20,6 +20,7 @@ dependencies:
   equatable: ^2.0.7
   flutter_contacts: ^1.1.9+2
   permission_handler: ^11.4.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
