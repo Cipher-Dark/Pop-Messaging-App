@@ -1,28 +1,33 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pop_chat/data/models/chat_message_model.dart';
 import 'package:pop_chat/data/models/chat_room_model.dart';
 import 'package:pop_chat/data/services/base_repository.dart';
 
 class ChatRepository extends BaseRepository {
-  CollectionReference get _charRooms => firestore.collection("chatRooms");
+  CollectionReference get _chatRooms => firestore.collection("chatRooms");
 
-  CollectionReference getChatRoomMessage(String charRoomId) {
-    return _charRooms.doc(charRoomId).collection("messages");
+  CollectionReference getChatRoomMessage(String chatRoomId) {
+    return _chatRooms.doc(chatRoomId).collection("messages");
   }
 
   Future<ChatRoomModel> getOrCreateChatRoom(
     String currentUserID,
     String otherUserId,
   ) async {
+    log("current user id $currentUserID");
+    log("other user id $otherUserId");
     final users = [
       currentUserID,
       otherUserId
     ]..sort();
     final roomId = users.join("_");
 
-    final roomDoc = await _charRooms.doc(roomId).get();
+    final roomDoc = await _chatRooms.doc(roomId).get();
 
     if (roomDoc.exists) {
+      log("room already exist");
       return ChatRoomModel.fromFirestore(roomDoc);
     }
     final currentUserData = (await firestore.collection("users").doc(currentUserID).get()).data() as Map<String, dynamic>;
@@ -43,7 +48,7 @@ class ChatRepository extends BaseRepository {
       },
     );
 
-    await _charRooms.doc(roomId).set(newRoom.toMap());
+    await _chatRooms.doc(roomId).set(newRoom.toMap());
     return newRoom;
   }
 
@@ -79,12 +84,55 @@ class ChatRepository extends BaseRepository {
     batch.set(messageDoc, message.toMap());
 
     //update chatroom
-    batch.update(_charRooms.doc(chatRoomId), {
+    batch.update(_chatRooms.doc(chatRoomId), {
       "lastMessage": content,
       "lastMessageSenderID": senderID,
       "lastMessageTime": message.timestamp,
     });
 
     await batch.commit();
+  }
+
+  Stream<List<ChatMessageModel>> getMessages(
+    String chatRoomId, {
+    DocumentSnapshot? lastDocument,
+  }) {
+    log("room id : $chatRoomId");
+    var query = getChatRoomMessage(chatRoomId)
+        .orderBy(
+          'timestamp',
+          descending: true,
+        )
+        .limit(20);
+
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+      log("in last doc");
+    }
+
+    return query.snapshots().map(
+          (snapshot) => snapshot.docs.map((doc) => ChatMessageModel.fromFirestore(doc)).toList(),
+        );
+  }
+
+  Future<List<ChatMessageModel>> getMoreMessages(
+    String chatRoomId, {
+    required DocumentSnapshot lastDocument,
+  }) async {
+    final query = getChatRoomMessage(chatRoomId)
+        .orderBy(
+          'timestamp',
+          descending: true,
+        )
+        .startAfterDocument(lastDocument)
+        .limit(20);
+
+    final snapshot = await query.get();
+
+    return snapshot.docs
+        .map(
+          (doc) => ChatMessageModel.fromFirestore(doc),
+        )
+        .toList();
   }
 }

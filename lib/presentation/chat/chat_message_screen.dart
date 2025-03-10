@@ -1,8 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pop_chat/data/models/chat_message_model.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_cubit.dart';
+import 'package:pop_chat/logic/cubits/chat/chat_state.dart';
 
 class ChatMessageScreen extends StatefulWidget {
   final String receiverID;
@@ -69,72 +72,85 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                return MessageBubble(
-                  message: ChatMessageModel(
-                    id: "1234",
-                    chatRoomId: "chatRoomId",
-                    senderID: "senderID",
-                    receiverID: "receiverID",
-                    content: "This the message",
-                    timestamp: Timestamp.now(),
-                    readBy: [],
-                  ),
-                  isME: false,
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Row(
+      body: BlocBuilder<ChatCubit, ChatState>(
+        bloc: _chatCubit,
+        builder: (context, state) {
+          if (state.status == ChatStatus.loading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (state.status == ChatStatus.error) {
+            return Center(
+              child: Text(state.error ?? "Somethisng went wrong"),
+            );
+          }
+          log(state.messages.toString());
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: state.messages.length,
+                  itemBuilder: (context, index) {
+                    log("message in listview");
+                    final message = state.messages[index];
+                    final isME = message.senderID == _chatCubit.currentUserID;
+
+                    log(message.content);
+                    return MessageBubble(
+                      message: message,
+                      isME: isME,
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
                   children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.emoji_emotions),
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        keyboardType: TextInputType.multiline,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: "Type a message",
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          fillColor: Theme.of(context).cardColor,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(Icons.emoji_emotions),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _messageController,
+                            keyboardType: TextInputType.multiline,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              hintText: "Type a message",
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              fillColor: Theme.of(context).cardColor,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        SizedBox(width: 14),
+                        IconButton(
+                          onPressed: _handleSendMessage,
+                          icon: Icon(
+                            Icons.send,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        )
+                      ],
                     ),
-                    SizedBox(width: 14),
-                    IconButton(
-                      onPressed: _handleSendMessage,
-                      icon: Icon(
-                        Icons.send,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    )
                   ],
                 ),
-              ],
-            ),
-          )
-        ],
+              )
+            ],
+          );
+        },
       ),
     );
   }

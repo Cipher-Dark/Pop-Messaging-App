@@ -43,21 +43,18 @@ class ChatMessageModel {
       receiverID: data["receiverID"] as String,
       content: data["content"] as String,
       type: MessageType.values.firstWhere(
-        (e) => e.toString() == data["type"],
+        (e) => e.toString() == data['type'],
         orElse: () => MessageType.text,
       ),
-      status: MessageStatus.values.firstWhere(
-        (e) => e.toString() == data["status"],
-        orElse: () => MessageStatus.sent,
-      ),
-      timestamp: data["timestamp"] as Timestamp,
-      readBy: List<String>.from(data["readBy"] ?? []),
+      status: MessageStatus.values.firstWhere((e) => e.toString() == data['status'], orElse: () => MessageStatus.sent),
+      timestamp: data['timestamp'] as Timestamp,
+      readBy: List<String>.from(data['readBy'] ?? []),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      "charRoomId": chatRoomId,
+      "chatRoomId": chatRoomId,
       "senderID": senderID,
       "receiverID": receiverID,
       "content": content,
