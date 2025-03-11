@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pop_chat/data/models/chat_message_model.dart';
 import 'package:pop_chat/data/models/chat_room_model.dart';
+import 'package:pop_chat/data/models/user_model.dart';
 import 'package:pop_chat/data/services/base_repository.dart';
 
 class ChatRepository extends BaseRepository {
@@ -229,5 +230,45 @@ class ChatRepository extends BaseRepository {
         "isTypingUserID": data['isTypingUserID'],
       };
     });
+  }
+
+  Future<void> blockUser(String currentUserID, String blockUserId) async {
+    final userRef = firestore.collection("users").doc(currentUserID);
+    await userRef.update({
+      'blockedUsers': FieldValue.arrayUnion(
+        [
+          blockUserId
+        ],
+      )
+    });
+  }
+
+  Future<void> unBlockUser(String currentUserID, String blockUserId) async {
+    final userRef = firestore.collection("users").doc(currentUserID);
+    await userRef.update({
+      'blockedUsers': FieldValue.arrayRemove(
+        [
+          blockUserId
+        ],
+      )
+    });
+  }
+
+  Stream<bool> isUserBlocked(String currentUserId, String otherUserID) {
+    return firestore.collection("users").doc(currentUserId).snapshots().map(
+      (doc) {
+        final userData = UserModel.fromFirestore(doc);
+        return userData.blockedUsers.contains(otherUserID);
+      },
+    );
+  }
+
+  Stream<bool> amIBlocked(String currentUserId, String otherUserID) {
+    return firestore.collection("users").doc(otherUserID).snapshots().map(
+      (doc) {
+        final userData = UserModel.fromFirestore(doc);
+        return userData.blockedUsers.contains(currentUserId);
+      },
+    );
   }
 }

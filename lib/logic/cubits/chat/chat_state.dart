@@ -27,7 +27,7 @@ class ChatState extends Equatable {
     this.isReceiverTyping = false,
     this.isReceiverOnline = false,
     this.receiverLastSeen,
-    this.hasMoreMessages = false,
+    this.hasMoreMessages = true,
     this.isLoadingMore = false,
     this.isUserBloced = false,
     this.amIBlocked = false,

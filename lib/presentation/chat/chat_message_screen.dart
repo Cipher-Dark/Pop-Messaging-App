@@ -23,14 +23,37 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   late final ChatCubit _chatCubit;
   bool _isComposing = false;
+  final _scrollContoller = ScrollController();
+  List<ChatMessageModel> _previousMessages = [];
 
   @override
   void initState() {
     _chatCubit = getIt<ChatCubit>();
     _chatCubit.enterChat(widget.receiverID);
     _messageController.addListener(_onTextChange);
+    _scrollContoller.addListener(_onScroll);
 
     super.initState();
+  }
+
+  void _onScroll() {
+    // load message when reaching top
+    if (_scrollContoller.position.pixels >= _scrollContoller.position.maxScrollExtent - 200) {
+      _chatCubit.loadMoreMessages();
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollContoller.hasClients) {
+      _scrollContoller.animateTo(0, duration: Duration(microseconds: 300), curve: Curves.easeOut);
+    }
+  }
+
+  void _hasNewMessages(List<ChatMessageModel> messages) {
+    if (messages.length != _previousMessages.length) {
+      _scrollToBottom();
+      _previousMessages = messages;
+    }
   }
 
   Future<void> _handleSendMessage() async {
@@ -59,6 +82,7 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
     super.dispose();
     _messageController.dispose();
     _chatCubit.leaveChat();
+    _scrollContoller.dispose();
   }
 
   @override
@@ -106,14 +130,62 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 15),
-            child: Icon(Icons.more_vert),
+          BlocBuilder<ChatCubit, ChatState>(
+            bloc: _chatCubit,
+            builder: (context, state) {
+              if (state.isUserBloced) {
+                return TextButton.icon(
+                  onPressed: () {
+                    _chatCubit.unBlockUser(widget.receiverID);
+                  },
+                  label: Text("Unblock"),
+                  icon: Icon(Icons.block),
+                );
+              }
+              return PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert),
+                onSelected: (value) async {
+                  if (value == 'block') {
+                    final bool? confirm = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text("Are you sure you want to block ${widget.receiverName}"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text(
+                              "Block",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await _chatCubit.blockUser(widget.receiverID);
+                    }
+                  }
+                },
+                itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem(
+                    value: 'block',
+                    child: Text("Block User"),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
-      body: BlocBuilder<ChatCubit, ChatState>(
+      body: BlocConsumer<ChatCubit, ChatState>(
         bloc: _chatCubit,
+        listener: (context, state) {
+          _hasNewMessages(state.messages);
+        },
         builder: (context, state) {
           if (state.status == ChatStatus.loading) {
             return const Center(
@@ -127,8 +199,19 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
           }
           return Column(
             children: [
+              if (state.amIBlocked)
+                Container(
+                  padding: EdgeInsets.all(8),
+                  color: Colors.red.withAlpha(25),
+                  child: Text(
+                    "You have been blocked by ${widget.receiverName}",
+                    style: TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               Expanded(
                 child: ListView.builder(
+                  controller: _scrollContoller,
                   reverse: true,
                   itemCount: state.messages.length,
                   itemBuilder: (context, index) {
@@ -141,50 +224,51 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.emoji_emotions),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            keyboardType: TextInputType.multiline,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(
-                              hintText: "Type a message",
-                              filled: true,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              fillColor: Theme.of(context).cardColor,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+              if (!state.amIBlocked && !state.isUserBloced)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {},
+                            icon: Icon(Icons.emoji_emotions),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              keyboardType: TextInputType.multiline,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                hintText: "Type a message",
+                                filled: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  borderSide: BorderSide.none,
+                                ),
+                                fillColor: Theme.of(context).cardColor,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 14),
-                        IconButton(
-                          onPressed: _handleSendMessage,
-                          icon: Icon(
-                            Icons.send,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
-              )
+                          SizedBox(width: 14),
+                          IconButton(
+                            onPressed: _isComposing ? _handleSendMessage : null,
+                            icon: Icon(
+                              Icons.send,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                )
             ],
           );
         },
