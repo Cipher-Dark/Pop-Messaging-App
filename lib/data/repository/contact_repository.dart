@@ -18,7 +18,6 @@ class ContactRepository extends BaseRepository {
   Future<List<Map<String, dynamic>>> getRegisteredContacts() async {
     final bool = await requestContactsPermission();
     if (!bool) {
-      log("Permission ");
       return [];
     }
     try {

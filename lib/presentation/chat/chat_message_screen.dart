@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -16,7 +14,6 @@ class ChatMessageScreen extends StatefulWidget {
     required this.receiverID,
     required this.receiverName,
   });
-
   @override
   State<ChatMessageScreen> createState() => _ChatMessageScreenState();
 }
@@ -24,11 +21,13 @@ class ChatMessageScreen extends StatefulWidget {
 class _ChatMessageScreenState extends State<ChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   late final ChatCubit _chatCubit;
+  bool _isComposing = false;
 
   @override
   void initState() {
     _chatCubit = getIt<ChatCubit>();
     _chatCubit.enterChat(widget.receiverID);
+    _messageController.addListener(_onTextChange);
 
     super.initState();
   }
@@ -40,6 +39,18 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
       content: messageText,
       receiverID: widget.receiverID,
     );
+  }
+
+  void _onTextChange() {
+    final isComposing = _messageController.text.isNotEmpty;
+    if (isComposing != _isComposing) {
+      setState(() {
+        _isComposing = isComposing;
+      });
+    }
+    if (isComposing) {
+      _chatCubit.startTyping();
+    }
   }
 
   @override
@@ -61,12 +72,30 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
             child: Text(widget.receiverName[0].toUpperCase()),
           ),
           title: Text(widget.receiverName),
-          subtitle: Text(
-            "Online",
-            style: TextStyle(
-              color: Colors.green,
-              fontSize: 12,
-            ),
+          subtitle: BlocBuilder<ChatCubit, ChatState>(
+            bloc: _chatCubit,
+            builder: (context, state) {
+              if (state.isReceiverTyping) {
+                return Text(
+                  "Typing...",
+                  style: TextStyle(color: Theme.of(context).primaryColor),
+                );
+              }
+              if (state.isReceiverOnline) {
+                return Text(
+                  "Online",
+                  style: TextStyle(color: Colors.green, fontSize: 12),
+                );
+              }
+              if (state.receiverLastSeen != null) {
+                final lastSeen = state.receiverLastSeen!.toDate();
+                return Text(
+                  "last seen at ${DateFormat('h:mm a').format(lastSeen)}",
+                  style: TextStyle(color: Colors.grey.shade600),
+                );
+              }
+              return SizedBox();
+            },
           ),
         ),
         actions: [
@@ -89,7 +118,6 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
               child: Text(state.error ?? "Somethisng went wrong"),
             );
           }
-          log(state.messages.toString());
           return Column(
             children: [
               Expanded(
@@ -97,10 +125,8 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
                   reverse: true,
                   itemCount: state.messages.length,
                   itemBuilder: (context, index) {
-                    log("message in listview");
                     final message = state.messages[index];
                     final isME = message.senderID == _chatCubit.currentUserID;
-                    log(message.content);
                     return MessageBubble(
                       message: message,
                       isME: isME,
