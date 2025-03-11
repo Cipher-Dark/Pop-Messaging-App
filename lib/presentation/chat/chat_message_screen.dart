@@ -5,6 +5,7 @@ import 'package:pop_chat/data/models/chat_message_model.dart';
 import 'package:pop_chat/data/services/service_locator.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_cubit.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_state.dart';
+import 'package:pop_chat/presentation/widgets/loading_dots.dart';
 
 class ChatMessageScreen extends StatefulWidget {
   final String receiverID;
@@ -76,9 +77,15 @@ class _ChatMessageScreenState extends State<ChatMessageScreen> {
             bloc: _chatCubit,
             builder: (context, state) {
               if (state.isReceiverTyping) {
-                return Text(
-                  "Typing...",
-                  style: TextStyle(color: Theme.of(context).primaryColor),
+                return Row(
+                  spacing: 4,
+                  children: [
+                    Text(
+                      "Typing",
+                      style: TextStyle(color: Theme.of(context).primaryColor),
+                    ),
+                    LoadingDots(),
+                  ],
                 );
               }
               if (state.isReceiverOnline) {
