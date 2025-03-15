@@ -12,7 +12,9 @@ import 'package:pop_chat/router/app_router.dart';
 
 Future<void> main() async {
   await setupServiceLocator();
-  runApp(const MyApp());
+  runApp(
+    const MyApp(),
+  );
 }
 
 class MyApp extends StatefulWidget {

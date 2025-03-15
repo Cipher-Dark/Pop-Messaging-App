@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pop_chat/data/repository/chat_repository.dart';
-import 'package:pop_chat/logic/cubits/auth/auth_state.dart';
 import 'package:pop_chat/logic/cubits/chat/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
